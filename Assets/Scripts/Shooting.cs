@@ -8,7 +8,7 @@ public class Shooting : MonoBehaviour
 
     public void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R))
+        if (InputManager.instance.ShootPressed())
         {
             Shoot();
         }

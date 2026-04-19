@@ -29,6 +29,12 @@ public class Player : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private bool isHit = false;
 
+    public CharacterDatabase characterDB;
+
+    public SpriteRenderer artworkSprite;
+
+    private int selectedOption = 0;
+
     int availableJumps;
     const float groundCheckRadius = 0.2f;
     const float overheadCheckRadius = 0.2f;
@@ -48,6 +54,24 @@ public class Player : MonoBehaviour
     bool coyoteJump = false;
     bool isDead = false;
     private bool isInvincible = false;
+
+
+
+    void Start()
+    {
+        crouchingCollider.enabled = false;
+        standingCollider.enabled = true;
+
+        if (!PlayerPrefs.HasKey("selectedOption"))
+        {
+            selectedOption = 0;
+        }
+        else
+        {
+            Load();
+        }
+        UpdateCharacter(selectedOption);
+    }
 
     void Awake()
     {
@@ -81,7 +105,7 @@ public class Player : MonoBehaviour
             foreach (var c in colliders)
             {
                 if (c.tag == "MovingPlatform")
-                transform.parent = c.transform;
+                    transform.parent = c.transform;
             }
         }
         else
@@ -89,7 +113,7 @@ public class Player : MonoBehaviour
             // Un-parent the transform
             transform.parent = null;
 
-            if(wasGrounded)
+            if (wasGrounded)
             {
                 coyoteJump = true;
                 StartCoroutine(CoyoteJumpDelay());
@@ -116,8 +140,7 @@ public class Player : MonoBehaviour
 
         // If left shift is clicked, enable isrunning
         // If left shift is released, disable isrunning
-        if (Input.GetKeyDown(KeyCode.LeftShift)) isRunning = true;
-        if (Input.GetKeyUp(KeyCode.LeftShift)) isRunning = false;
+        isRunning = InputManager.instance.RunHeld();
 
         animator.SetBool("IsRunning", horizontalValue != 0 && isGrounded && !isHit);
         if (horizontalValue != 0)
@@ -136,22 +159,14 @@ public class Player : MonoBehaviour
             animator.speed = 1f; // Idle or if stopped
         }
         // If we press jump button, enable it
-        if (Input.GetButtonDown("Jump"))
+        if (InputManager.instance.JumpPressed())
         {
             Jump();
         }
 
-        // If we press crouch button, enable it
-        if (Input.GetButtonDown("Crouch"))
-        { 
-            crouchPressed = true; 
-        }
+        // If we are pressing crouch button, enable it
         // Otherwise, disable it
-        else if (Input.GetButtonUp("Crouch"))
-        { 
-            crouchPressed = false; 
-        
-        }
+        crouchPressed = InputManager.instance.CrouchHeld();
     }
 
     // Happens every fixed frame (for physics based interactions)
@@ -223,6 +238,7 @@ public class Player : MonoBehaviour
         {
             if (Physics2D.OverlapCircle(overheadCheckCollider.position, overheadCheckRadius, groundLayer))
             {
+                Debug.Log("Blocked above!");
                 crouchFlag = true;
             }
         }
@@ -404,6 +420,52 @@ public class Player : MonoBehaviour
         yield return new WaitForSeconds(invincibleDuration - hitStunDuration);
 
         isInvincible = false;
+    }
+    private void UpdateCharacter(int selectedOption)
+    {
+        Character character = characterDB.GetCharacter(selectedOption);
+
+        animator.runtimeAnimatorController = character.animatorController;
+
+        Debug.Log("Character: " + character.characterName);
+        Debug.Log("Collider size: " + character.colliderSize);
+        Debug.Log("Crouch collider size: " + character.crouchColliderSize);
+
+        // Standing and Crouching colliders
+        CapsuleCollider2D standing = standingCollider as CapsuleCollider2D;
+        CapsuleCollider2D crouching = crouchingCollider as CapsuleCollider2D;
+
+        if (!character.useCustomCollider)
+        {
+
+            Debug.Log("Using DEFAULT collider");
+
+            // DEFAULT
+            standing.size = new Vector2(0.6f, 1.2f);
+            standing.offset = new Vector2(0, -0.3f);
+
+            crouching.size = new Vector2(0.6f, 0.6f);
+            crouching.offset = new Vector2(0, -0.6f);
+        }
+        else
+        {
+            Debug.Log("Using CUSTOM collider");
+
+            // CUSTOM STANDING
+            standing.size = character.colliderSize;
+            standing.offset = character.colliderOffset;
+
+            // CUSTOM CROUCH
+            crouching.size = character.crouchColliderSize;
+            crouching.offset = character.crouchColliderOffset;
+
+            Debug.Log("Collider size: " + character.colliderSize);
+        }
+    }
+
+    private void Load()
+    {
+        selectedOption = PlayerPrefs.GetInt("selectedOption");
     }
 }
 

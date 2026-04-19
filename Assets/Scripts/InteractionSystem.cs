@@ -22,7 +22,7 @@ public class InteractionSystem : MonoBehaviour
 
     bool InteractInput()
     {
-        return Input.GetKeyDown(KeyCode.E);
+        return InputManager.instance.InteractPressed();
     }
 
     bool DetectObject()
@@ -67,7 +67,7 @@ public class InteractionSystem : MonoBehaviour
         }
         else
         {
-            // Show item image in the middle
+            // Show item image in the middle4
             examineImage.sprite = item.GetComponent<SpriteRenderer>().sprite;
             // Write description beneath image
             examineText.text = item.descriptionText;

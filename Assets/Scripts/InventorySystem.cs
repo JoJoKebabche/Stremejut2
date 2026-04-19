@@ -23,7 +23,7 @@ public class InventorySystem : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I))
+        if (InputManager.instance.InventoryPressed())
         {
             ToggleInventory();
         }

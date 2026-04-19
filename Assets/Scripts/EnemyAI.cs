@@ -5,6 +5,10 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public class EnemyAI : MonoBehaviour
 {
+    private Animator animator;
+    private bool isDead = false;
+    private Collider2D col;
+
     // Reference to waypoints
     public List<Transform> points;
     // The int value for the next point index
@@ -13,6 +17,12 @@ public class EnemyAI : MonoBehaviour
     private int idChangeValue = 1;
     // Speed of movement
     public float speed = 2;
+
+    private void Awake()
+    {
+        animator = GetComponent<Animator>();
+        col = GetComponent<Collider2D>();
+    }
 
     private void Reset()
     {
@@ -93,5 +103,35 @@ public class EnemyAI : MonoBehaviour
                 player.TakeDamage(25, transform.position);
             }
         }
+    }
+    public void Die()
+    {
+        if (isDead) return;
+
+        isDead = true;
+
+        // Stop damaging player
+        col.enabled = false;
+
+        // Stop movement
+        speed = 0;
+
+        // Play enemy death sound
+        AudioManager.instance.SFX("enemy death");
+
+        // Play death animation
+        animator.SetTrigger("Die");
+
+        // Destroy after animation
+        StartCoroutine(DestroyAfterDeath());
+    }
+
+    IEnumerator DestroyAfterDeath()
+    {
+        yield return new WaitForSeconds(
+            animator.GetCurrentAnimatorStateInfo(0).length
+        );
+
+        Destroy(transform.parent.gameObject);
     }
 }
